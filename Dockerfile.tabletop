@@ -8,7 +8,7 @@ RUN npm ci
 COPY . .
 
 ENV VITE_PVP_SERVER=
-ENV VITE_PVP_PATH=/tabletop/socket.io
+ENV VITE_PVP_PATH=/simulator/pktcg-simulator/socket.io
 ENV VITE_LIMITLESS_WEB=https://limitlesstcg.com
 ENV VITE_ENV=prod
 

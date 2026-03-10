@@ -13,11 +13,11 @@
 </script>
 
 <svelte:head>
-   <title>PvP Tabletop</title>
+   <title>Pokemon TCG Simulator</title>
 </svelte:head>
 
 <a href="https://github.com/link--11/pvp-tabletop" class="fixed z-15 bottom-2 right-4 opacity-75 font-bold flex items-center gap-2">
-   Beta <Icon path={github} size={512}></Icon>
+   Pokemon TCG Simulator <Icon path={github} size={512}></Icon>
 </a>
 
 <DeckInput />

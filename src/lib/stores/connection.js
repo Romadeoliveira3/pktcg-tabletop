@@ -1,7 +1,7 @@
 import { browser } from '$app/environment'
 
 const configuredServer = import.meta.env.VITE_PVP_SERVER
-const socketPath = import.meta.env.VITE_PVP_PATH || '/tabletop/socket.io'
+const socketPath = import.meta.env.VITE_PVP_PATH || '/simulator/pktcg-simulator/socket.io'
 const server = configuredServer || (browser ? window.location.origin : 'http://localhost')
 
 import { writable } from './custom/writable.js'

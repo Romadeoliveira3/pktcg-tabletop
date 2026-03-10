@@ -39,7 +39,7 @@ sio = socketio.AsyncServer(
     async_mode="asgi",
     cors_allowed_origins="*",
 )
-http_app = FastAPI(title="PvP Tabletop Realtime")
+http_app = FastAPI(title="Pokemon TCG Simulator Realtime")
 
 
 def _room_size(room_id: str) -> int:
