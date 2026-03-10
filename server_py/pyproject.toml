@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "pktcg-tabletop-server"
+version = "0.1.0"
+description = "Python Socket.IO server for pktcg-tabletop"
+authors = ["Codex <codex@example.com>"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+fastapi = "0.115.12"
+python-socketio = "5.13.0"
+uvicorn = "0.34.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

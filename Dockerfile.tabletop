@@ -16,12 +16,29 @@ RUN npx vite build
 
 FROM python:3.12-slim
 
+ENV POETRY_VERSION=1.8.2 \
+    POETRY_HOME=/opt/poetry \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_CREATE=false \
+    PATH="/opt/poetry/bin:$PATH"
+
 WORKDIR /app
 
-COPY server_py/requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && curl -sSL https://install.python-poetry.org | python3 - \
+    && apt-get purge -y --auto-remove curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app/server_py
+
+COPY server_py/pyproject.toml /app/server_py/pyproject.toml
+COPY server_py/poetry.lock /app/server_py/poetry.lock
+RUN poetry install --only main --no-root
 
 COPY server_py /app/server_py
+
+WORKDIR /app
 COPY --from=frontend-build /app/build /app/build
 
 EXPOSE 8001
