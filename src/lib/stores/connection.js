@@ -1,4 +1,8 @@
-const server = import.meta.env.VITE_PVP_SERVER
+import { browser } from '$app/environment'
+
+const configuredServer = import.meta.env.VITE_PVP_SERVER
+const socketPath = import.meta.env.VITE_PVP_PATH || '/tabletop/socket.io'
+const server = configuredServer || (browser ? window.location.origin : 'http://localhost')
 
 import { writable } from './custom/writable.js'
 import { io } from 'socket.io-client'
@@ -8,6 +12,7 @@ export let connected = writable(false)
 export let chat = writable([])
 
 export const socket = io(server, {
+   path: socketPath,
    transports: [ 'websocket' ],
    autoConnect: false
 })
