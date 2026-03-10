@@ -16,8 +16,8 @@
    <title>Pokemon TCG Simulator</title>
 </svelte:head>
 
-<a href="https://github.com/link--11/pvp-tabletop" class="fixed z-15 bottom-2 right-4 opacity-75 font-bold flex items-center gap-2">
-   Pokemon TCG Simulator <Icon path={github} size={512}></Icon>
+<a href="https://github.com/link--11/pvp-tabletop" class="fixed z-15 bottom-2 right-4 opacity-75 text-xs font-semibold flex items-center gap-2">
+   Credits: Robin S <Icon path={github} size={512}></Icon>
 </a>
 
 <DeckInput />
