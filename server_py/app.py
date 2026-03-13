@@ -5,12 +5,13 @@ from uuid import uuid4
 
 import socketio
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 BUILD_DIR = BASE_DIR / "build"
 INDEX_FILE = BUILD_DIR / "index.html"
+PREFIX = "/simulator/pktcg-simulator"
 
 GAME_EVENTS = (
     "chatMessage",
@@ -60,37 +61,44 @@ def _room_size(room_id: str) -> int:
     return len(room) if room else 0
 
 
-PREFIX = "/simulator/pktcg-simulator"
+@http_app.get("/")
+@http_app.get(f"{PREFIX}")
+@http_app.get(f"{PREFIX}/")
+async def serve_index() -> FileResponse:
+    if not INDEX_FILE.exists():
+        raise HTTPException(status_code=503, detail="Frontend build not found")
+    # No cache for index to avoid version mismatches
+    return FileResponse(INDEX_FILE, headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"})
 
+# Mount static folders if they exist
+for folder in ["_app", "assets", "images", "fonts"]:
+    if (BUILD_DIR / folder).exists():
+        http_app.mount(f"{PREFIX}/{folder}", StaticFiles(directory=str(BUILD_DIR / folder)), name=f"static_{folder}")
+        # Also mount at root for local development without prefix
+        http_app.mount(f"/{folder}", StaticFiles(directory=str(BUILD_DIR / folder)), name=f"root_static_{folder}")
 
 @http_app.get(f"{PREFIX}/health-check")
-@http_app.get("/health-check") # Keep for docker healthcheck
+@http_app.get("/health-check")
 async def health_check() -> JSONResponse:
     return JSONResponse({"status": "ready"})
-
 
 @http_app.get(f"{PREFIX}/api/health-check")
 async def api_health_check() -> JSONResponse:
     return JSONResponse({"status": "ready"})
 
-
-@http_app.get(f"{PREFIX}/")
-@http_app.get(f"{PREFIX}")
-async def serve_index() -> FileResponse:
-    if not INDEX_FILE.exists():
-        raise HTTPException(status_code=503, detail="Frontend build not found")
-    return FileResponse(INDEX_FILE)
-
-# Monta arquivos estáticos do SvelteKit (Tudo que estiver em build/)
-if BUILD_DIR.exists():
-    http_app.mount(PREFIX, StaticFiles(directory=str(BUILD_DIR), html=True), name="simulator_static")
-
-@http_app.get(PREFIX + "/{requested_path:path}", response_model=None)
+@http_app.get(PREFIX + "/{requested_path:path}")
+@http_app.get("/{requested_path:path}")
 async def serve_frontend(requested_path: str):
-    # Se chegou aqui, o arquivo não existe em StaticFiles, então retornamos index.html (SPA)
-    if INDEX_FILE.exists():
-        return FileResponse(INDEX_FILE)
-    raise HTTPException(status_code=404, detail="Not found")
+    # Avoid infinite loop if requested_path is empty (already handled by serve_index)
+    if not requested_path or requested_path == "/":
+        return await serve_index()
+        
+    # If it looks like an asset that wasn't caught by mounts, it's a real 404
+    if "." in requested_path.split("/")[-1]:
+       raise HTTPException(status_code=404, detail="Asset not found")
+
+    # SPA Fallback for all other routes
+    return await serve_index()
 
 
 @sio.event
