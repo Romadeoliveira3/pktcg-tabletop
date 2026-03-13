@@ -62,14 +62,6 @@ def _room_size(room_id: str) -> int:
 
 PREFIX = "/simulator/pktcg-simulator"
 
-# Monta arquivos estáticos do SvelteKit
-if (BUILD_DIR / "_app").exists():
-    http_app.mount(f"{PREFIX}/_app", StaticFiles(directory=str(BUILD_DIR / "_app")), name="app_static")
-
-# Monta outras pastas estáticas comuns
-for folder in ["assets", "images", "fonts"]:
-    if (BUILD_DIR / folder).exists():
-        http_app.mount(f"{PREFIX}/{folder}", StaticFiles(directory=str(BUILD_DIR / folder)), name=f"{folder}_static")
 
 @http_app.get(f"{PREFIX}/health-check")
 @http_app.get("/health-check") # Keep for docker healthcheck
@@ -89,20 +81,16 @@ async def serve_index() -> FileResponse:
         raise HTTPException(status_code=503, detail="Frontend build not found")
     return FileResponse(INDEX_FILE)
 
+# Monta arquivos estáticos do SvelteKit (Tudo que estiver em build/)
+if BUILD_DIR.exists():
+    http_app.mount(PREFIX, StaticFiles(directory=str(BUILD_DIR), html=True), name="simulator_static")
 
 @http_app.get(PREFIX + "/{requested_path:path}", response_model=None)
 async def serve_frontend(requested_path: str):
-    if not INDEX_FILE.exists():
-        raise HTTPException(status_code=503, detail="Frontend build not found")
-
-    # Tenta servir como arquivo do root (favicon, etc)
-    if requested_path:
-        candidate = (BUILD_DIR / requested_path).resolve()
-        if BUILD_DIR in candidate.parents and candidate.is_file():
-            return FileResponse(candidate)
-
-    # Fallback para SPA (index.html)
-    return FileResponse(INDEX_FILE)
+    # Se chegou aqui, o arquivo não existe em StaticFiles, então retornamos index.html (SPA)
+    if INDEX_FILE.exists():
+        return FileResponse(INDEX_FILE)
+    raise HTTPException(status_code=404, detail="Not found")
 
 
 @sio.event
