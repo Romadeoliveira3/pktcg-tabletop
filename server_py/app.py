@@ -35,11 +35,21 @@ GAME_EVENTS = (
 )
 
 
+from fastapi.middleware.cors import CORSMiddleware
+
 sio = socketio.AsyncServer(
     async_mode="asgi",
     cors_allowed_origins="*",
 )
 http_app = FastAPI(title="Pokemon TCG Simulator Realtime")
+
+http_app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def _room_size(room_id: str) -> int:
@@ -48,24 +58,28 @@ def _room_size(room_id: str) -> int:
     return len(room) if room else 0
 
 
-@http_app.get("/health-check")
+PREFIX = "/simulator/pktcg-simulator"
+
+@http_app.get(f"{PREFIX}/health-check")
+@http_app.get("/health-check") # Keep for docker healthcheck
 async def health_check() -> JSONResponse:
     return JSONResponse({"status": "ready"})
 
 
-@http_app.get("/api/health-check")
+@http_app.get(f"{PREFIX}/api/health-check")
 async def api_health_check() -> JSONResponse:
     return JSONResponse({"status": "ready"})
 
 
-@http_app.get("/")
+@http_app.get(f"{PREFIX}/")
+@http_app.get(f"{PREFIX}")
 async def serve_index() -> FileResponse:
     if not INDEX_FILE.exists():
         raise HTTPException(status_code=503, detail="Frontend build not found")
     return FileResponse(INDEX_FILE)
 
 
-@http_app.get("/{requested_path:path}", response_model=None)
+@http_app.get(PREFIX + "/{requested_path:path}", response_model=None)
 async def serve_frontend(requested_path: str):
     if not INDEX_FILE.exists():
         raise HTTPException(status_code=503, detail="Frontend build not found")
@@ -140,4 +154,4 @@ for game_event in GAME_EVENTS:
     _register_relay(game_event)
 
 
-app = socketio.ASGIApp(sio, other_asgi_app=http_app, socketio_path="socket.io")
+app = socketio.ASGIApp(sio, other_asgi_app=http_app, socketio_path="/simulator/pktcg-simulator/socket.io")

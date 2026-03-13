@@ -6,7 +6,10 @@ const config = {
    kit: {
       adapter: adapter({
          pages: process.env.BUILD_DIR || 'build'
-      })
+      }),
+      paths: {
+         base: process.env.VITE_ENV === 'prod' ? '/simulator/pktcg-simulator' : ''
+      }
    }
 }
 
